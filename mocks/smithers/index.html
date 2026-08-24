@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GARDEN — HandStrudel</title>
+<style>
+  :root{
+    --bg:#05050a; --panel:#09090f; --border:#16162a;
+    --left:#00ff9d; --right:#ff2d6b; --dim:#2a2a44;
+    --text:#9898c0; --bright:#e0e0ff;
+    --font:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--font);
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  #app{
+    height:100dvh; display:grid; grid-template-rows:36px 1fr 46px;
+    max-width:520px; margin:0 auto; border-left:1px solid var(--border);
+    border-right:1px solid var(--border);
+  }
+  header{
+    background:var(--panel); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:10px; padding:0 14px;
+  }
+  .logo{font-size:11px; font-weight:700; letter-spacing:4px; color:var(--bright)}
+  .sep{color:var(--border)}
+  .status{font-size:10px; letter-spacing:1px; color:var(--dim)}
+  .beat{margin-left:auto; display:flex; gap:3px}
+  .bd{width:5px;height:5px;border-radius:50%;background:var(--dim)}
+  .bd.on{background:var(--left); box-shadow:0 0 6px var(--left)}
+
+  main{overflow-y:auto; padding:20px 16px 26px}
+  .view{display:none} .view.on{display:block}
+
+  /* ── hero ─────────────────────────── */
+  .stage{
+    position:relative; height:190px; border:1px solid var(--border);
+    border-radius:3px; background:
+      radial-gradient(120% 90% at 50% 120%, rgba(0,255,157,.13), transparent 62%),
+      linear-gradient(#07070d,#05050a);
+    overflow:hidden; margin-bottom:18px;
+  }
+  .grass{position:absolute;inset:0}
+  .blade{
+    position:absolute; bottom:0; width:1px; background:linear-gradient(transparent,var(--left));
+    opacity:.45; transform-origin:bottom center; animation:sway 4s ease-in-out infinite;
+  }
+  @keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  .hand{
+    position:absolute; top:22px; left:50%; transform:translateX(-50%);
+    font-size:10px; letter-spacing:2px; color:var(--right); opacity:.75;
+  }
+  .resident{
+    position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+    text-align:center; transition:.4s;
+  }
+  .bulb{
+    width:44px;height:44px;border-radius:50%;margin:0 auto 8px;
+    border:1px solid var(--dim); background:#0a0a12; transition:.4s;
+  }
+  body.pinned .bulb{
+    border-color:var(--left); background:radial-gradient(circle,rgba(0,255,157,.35),#0a0a12 70%);
+    box-shadow:0 0 26px rgba(0,255,157,.45); animation:breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+  .rlabel{font-size:9px;letter-spacing:2px;color:var(--dim)}
+  body.pinned .rlabel{color:var(--left)}
+
+  h1{
+    font-size:22px; line-height:1.35; color:var(--bright); font-weight:700;
+    letter-spacing:-.5px; margin-bottom:12px;
+  }
+  h1 em{font-style:normal; color:var(--left)}
+  .sub{font-size:11px; line-height:1.7; margin-bottom:20px}
+
+  .card{
+    border:1px solid var(--border); background:var(--panel); border-radius:3px;
+    padding:14px; margin-bottom:14px;
+  }
+  .kicker{font-size:9px;letter-spacing:3px;color:var(--dim);margin-bottom:10px}
+  .snip{display:flex;align-items:center;gap:10px}
+  .snipname{font-size:12px;color:var(--bright);flex:1}
+  .snipmeta{font-size:9px;color:var(--dim);letter-spacing:1px}
+  .pin{
+    font-family:inherit; font-size:10px; letter-spacing:2px; cursor:pointer;
+    background:transparent; color:var(--text); border:1px solid var(--dim);
+    padding:8px 12px; border-radius:2px; transition:.2s;
+  }
+  .pin:hover{border-color:var(--text)}
+  body.pinned .pin{
+    border-color:var(--left); color:var(--left); background:rgba(0,255,157,.09);
+  }
+  .note{font-size:10px;line-height:1.7;color:var(--dim);margin-top:12px;min-height:34px}
+  body.pinned .note{color:var(--text)}
+  code{color:var(--left);font-size:10px}
+
+  /* ── flow ─────────────────────────── */
+  .flowbox{
+    display:block; text-decoration:none; border:1px solid var(--border);
+    background:var(--panel); border-radius:3px; padding:13px 14px; margin-bottom:10px;
+    border-left:2px solid var(--left);
+  }
+  .flowbox .t{font-size:12px;color:var(--bright);margin-bottom:5px}
+  .flowbox .d{font-size:10px;color:var(--dim);line-height:1.6}
+  .arrow{text-align:center;color:var(--dim);font-size:10px;margin:-4px 0 6px}
+
+  /* ── placeholder ──────────────────── */
+  .soon{
+    border:1px dashed var(--dim); border-radius:3px; padding:26px 18px; text-align:center;
+  }
+  .soon h2{font-size:15px;color:var(--bright);letter-spacing:1px;margin-bottom:10px}
+  .soon p{font-size:11px;line-height:1.7}
+  .tag{font-size:8px;letter-spacing:3px;color:var(--right);margin-bottom:14px}
+
+  /* ── nav ──────────────────────────── */
+  nav{
+    background:var(--panel); border-top:1px solid var(--border);
+    display:flex; align-items:stretch;
+  }
+  nav button{
+    flex:1; background:transparent; border:0; border-right:1px solid var(--border);
+    color:var(--dim); font-family:inherit; font-size:9px; letter-spacing:2px;
+    cursor:pointer; padding:0; transition:.15s;
+  }
+  nav button:last-child{border-right:0}
+  nav button:hover{color:var(--text)}
+  nav button[aria-current="true"]{color:var(--left); background:rgba(0,255,157,.06)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="logo">GARDEN</span>
+    <span class="sep">|</span>
+    <span class="status" id="status">handstrudel · 1 resident</span>
+    <span class="beat" id="beat"></span>
+  </header>
+
+  <main>
+    <!-- #/ -->
+    <section class="view" id="v-home">
+      <div class="stage">
+        <div class="grass" id="grass"></div>
+        <div class="hand">◈ LIVE HANDS ◈</div>
+        <div class="resident">
+          <div class="bulb"></div>
+          <div class="rlabel" id="rlabel">UNPINNED</div>
+        </div>
+      </div>
+
+      <h1>Pin one loop as a <em>resident</em> and it keeps growing while your hands wander off.</h1>
+      <p class="sub">
+        Every snippet you save lands in the garden. Pin one and it becomes a permanent
+        tenant — playing under every gesture, every session, until you dig it up.
+      </p>
+
+      <div class="card">
+        <div class="kicker">SNIPPET 04</div>
+        <div class="snip">
+          <div>
+            <div class="snipname">moss drone</div>
+            <div class="snipmeta">gm_pad_warm · 0.5× · Dm</div>
+          </div>
+          <div style="flex:1"></div>
+          <button class="pin" id="pinBtn">PIN AS RESIDENT</button>
+        </div>
+        <div class="note" id="note">
+          Tap to root it. Residents survive reloads and play beneath the live hand pattern.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kicker">GENERATED</div>
+        <code id="code">stack(live)</code>
+      </div>
+    </section>
+
+    <!-- #/flow -->
+    <section class="view" id="v-flow">
+      <div class="kicker">FLOW MAP</div>
+      <h1 style="font-size:16px">Four screens.</h1>
+      <div style="height:14px"></div>
+      <a class="flowbox" href="#/">
+        <div class="t">01 · Garden Stage</div>
+        <div class="d">Live hands over the pinned resident. Pin toggle lives here.</div>
+      </a>
+      <div class="arrow">↓</div>
+      <a class="flowbox" href="#/s/2">
+        <div class="t">02 · The Beds</div>
+        <div class="d">All saved snippets, sorted by how long they've been rooted.</div>
+      </a>
+      <div class="arrow">↓</div>
+      <a class="flowbox" href="#/s/3">
+        <div class="t">03 · Resident Card</div>
+        <div class="d">One tenant's history: age, mutations, hands that fed it.</div>
+      </a>
+      <div class="arrow">↓</div>
+      <a class="flowbox" href="#/s/4">
+        <div class="t">04 · Seasons</div>
+        <div class="d">Residents drift in key and tempo over weeks. Let them.</div>
+      </a>
+    </section>
+
+    <!-- #/s/2 -->
+    <section class="view" id="v-s2">
+      <div class="soon">
+        <div class="tag">COMING NEXT</div>
+        <h2>THE BEDS</h2>
+        <p>Every snippet you ever saved, laid out by root depth — the oldest sit deepest.</p>
+      </div>
+    </section>
+
+    <!-- #/s/3 -->
+    <section class="view" id="v-s3">
+      <div class="soon">
+        <div class="tag">COMING NEXT</div>
+        <h2>RESIDENT CARD</h2>
+        <p>A tenant's whole life: planted date, hours sounded, every gesture that pruned it.</p>
+      </div>
+    </section>
+
+    <!-- #/s/4 -->
+    <section class="view" id="v-s4">
+      <div class="soon">
+        <div class="tag">COMING NEXT</div>
+        <h2>SEASONS</h2>
+        <p>Leave a resident alone long enough and it detunes, slows, and blooms into something else.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav id="nav">
+    <button data-screen="#/">STAGE</button>
+    <button data-screen="#/flow">FLOW</button>
+    <button data-screen="#/s/2">BEDS</button>
+    <button data-screen="#/s/3">CARD</button>
+    <button data-screen="#/s/4">SEASONS</button>
+  </nav>
+</div>
+
+<script>
+(function () {
+  // grass
+  var g = document.getElementById('grass'), h = '';
+  for (var i = 0; i < 46; i++) {
+    h += '<div class="blade" style="left:' + (i * 2.2 + 1) + '%;height:' +
+      (14 + (i * 37 % 46)) + 'px;animation-delay:' + (i % 11 * .21).toFixed(2) +
+      's;opacity:' + (.2 + (i % 5) * .1).toFixed(2) + '"></div>';
+  }
+  g.innerHTML = h;
+
+  // beat dots
+  var beat = document.getElementById('beat'), dots = [];
+  for (var b = 0; b < 4; b++) {
+    var d = document.createElement('span');
+    d.className = 'bd'; beat.appendChild(d); dots.push(d);
+  }
+  var step = 0;
+  setInterval(function () {
+    dots.forEach(function (d, i) { d.classList.toggle('on', i === step); });
+    step = (step + 1) % 4;
+  }, 420);
+
+  // key interaction: pin the resident
+  var pinned = false;
+  var btn = document.getElementById('pinBtn');
+  btn.addEventListener('click', function () {
+    pinned = !pinned;
+    document.body.classList.toggle('pinned', pinned);
+    btn.textContent = pinned ? 'ROOTED — UNPIN' : 'PIN AS RESIDENT';
+    document.getElementById('rlabel').textContent = pinned ? 'RESIDENT · MOSS DRONE' : 'UNPINNED';
+    document.getElementById('note').textContent = pinned
+      ? 'moss drone is a resident. It sounds under every pattern your hands make, in every session, until you unpin it.'
+      : 'Tap to root it. Residents survive reloads and play beneath the live hand pattern.';
+    document.getElementById('code').textContent = pinned
+      ? 'stack(live, resident("moss drone").slow(2))'
+      : 'stack(live)';
+    document.getElementById('status').textContent = pinned
+      ? 'handstrudel · 1 resident' : 'handstrudel · 0 residents';
+  });
+  document.getElementById('status').textContent = 'handstrudel · 0 residents';
+
+  // hash router
+  var ROUTES = { '#/': 'v-home', '#/flow': 'v-flow', '#/s/2': 'v-s2', '#/s/3': 'v-s3', '#/s/4': 'v-s4' };
+  function render() {
+    var r = ROUTES[location.hash] ? location.hash : '#/';
+    Object.keys(ROUTES).forEach(function (k) {
+      document.getElementById(ROUTES[k]).classList.toggle('on', k === r);
+    });
+    document.querySelectorAll('#nav button').forEach(function (b) {
+      b.setAttribute('aria-current', String(b.dataset.screen === r));
+    });
+    document.querySelector('main').scrollTop = 0;
+  }
+  document.querySelectorAll('#nav button').forEach(function (b) {
+    b.addEventListener('click', function () { location.hash = b.dataset.screen; });
+  });
+  window.addEventListener('hashchange', render);
+  if (!location.hash) location.hash = '#/';
+  render();
+})();
+</script>
+</body>
+</html>
